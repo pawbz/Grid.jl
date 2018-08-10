@@ -12,7 +12,7 @@ Data type to represent 2D grid.
 * `δx` : sampling interval in horizontal direction
 * `δz` : sampling interval in vertical direction
 """
-type M2D
+mutable struct M2D
 	x::Array{Float64,1}
 	z::Array{Float64,1}
 	nx::Int64
@@ -56,8 +56,8 @@ function M2D(xmin::Float64, xmax::Float64,
 	nx::Int64, nz::Int64,
 	npml::Int64 
 	)
-	x = Array(linspace(xmin,xmax,nx));
-	z = Array(linspace(zmin,zmax,nz));
+	x = Array(range(xmin,stop=xmax,length=nx));
+	z = Array(range(zmin,stop=zmax,length=nz));
 	return M2D(x, z, nx, nz, npml, x[2]-x[1], z[2]-z[1])
 end
 
@@ -190,7 +190,7 @@ Data type to represent 1D grid.
 * `nx` : number of samples
 * `δx` : sampling interval
 """
-type M1D
+mutable struct M1D
 	x::Array{Float64}
 	nx::Int64
 	δx::Float64
@@ -215,7 +215,7 @@ Construct 1-D grid based on number of samples.
 * `nx::Int64` : number of samples
 """
 function M1D(xbeg::Float64, xend::Float64, nx::Int64)
-	x = Array(linspace(xbeg, xend, nx))
+	x = Array(range(xbeg, stop=xend, length=nx))
 	δx = length(x)==1 ? 0. : x[2]-x[1]
 	return M1D(x, nx, δx)
 end
@@ -259,7 +259,7 @@ function M1D_lag(xlag, δx::Float64)
 	nplag=length(x1)
 	x2=[(it-1)*δx for it in 2:nnlag]
 	if(x2≠[])
-		x=vcat(-1.*flipdim(x2,1),x)
+		x=vcat(-1.0*reverse(x2,dims=1),x)
 	end
 	nnlag=length(x2)
 	if(x==[])
@@ -350,7 +350,7 @@ function M1D_xcorr(tgrid; lags=[1.,1.].*abs(tgrid.x[end]-tgrid.x[1]))
 	plags=round(Int,  lags[1]*inv(tgrid.δx))
 	nlags=round(Int,  lags[2]*inv(tgrid.δx))
 
-	vec=vcat(-1.*collect(nlags:-1:0),collect(1:plags)).*tgrid.δx
+	vec=vcat(-1.0*collect(nlags:-1:0),collect(1:plags)).*tgrid.δx
 	return M1D(vec, length(vec), tgrid.δx)
 end
 
