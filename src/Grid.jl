@@ -1,6 +1,8 @@
-__precompile__()
-
 module Grid
+
+function Hello()
+	println("rrr")
+end
 
 """
 Data type to represent 2D grid.
