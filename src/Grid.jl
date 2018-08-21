@@ -1,9 +1,5 @@
 module Grid
 
-function Hello()
-	println("rrr")
-end
-
 """
 Data type to represent 2D grid.
 # Fields
@@ -19,16 +15,15 @@ mutable struct M2D
 	z::Array{Float64,1}
 	nx::Int64
 	nz::Int64
-	npml::Int64
 	δx::Float64
 	δz::Float64
 	"adding conditions that are to be false while construction"
-	M2D(x, z, nx, nz, npml, δx, δz) = 
+	M2D(x, z, nx, nz, δx, δz) = 
 		any([
        		  δx < 0.0, length(x) != nx,
        		  δz < 0.0, length(z) != nz
 		  ]) ? 
-		error("error in M2D construction") : new(x, z, nx, nz, npml, δx, δz)
+		error("error in M2D construction") : new(x, z, nx, nz, δx, δz)
 end
 
 "Logical operation for `M2D`"
@@ -47,7 +42,6 @@ Construct 2-D grid based on number of samples.
 * `zmax::Float64` : firs value of first dimension
 * `nx::Int64` : size of second dimension
 * `nz::Int64` : size of first dimension
-* `npml::Int64` : number of PML layers 
 
 # Return
 
@@ -56,11 +50,10 @@ Construct 2-D grid based on number of samples.
 function M2D(xmin::Float64, xmax::Float64,
 	zmin::Float64, zmax::Float64,
 	nx::Int64, nz::Int64,
-	npml::Int64 
 	)
 	x = Array(range(xmin,stop=xmax,length=nx));
 	z = Array(range(zmin,stop=zmax,length=nz));
-	return M2D(x, z, nx, nz, npml, x[2]-x[1], z[2]-z[1])
+	return M2D(x, z, nx, nz, x[2]-x[1], z[2]-z[1])
 end
 
 """
@@ -74,7 +67,6 @@ Construct 2-D grid based on sampling intervals.
 * `zmax::Float64` : firs value of first dimension
 * `δx::Float64` : second sampling interval
 * `δz::Float64` : first sampling interval
-* `npml::Int64` : number of PML layers 
 
 # Return
 
@@ -83,12 +75,11 @@ Construct 2-D grid based on sampling intervals.
 function M2D(xmin::Float64, xmax::Float64,
 	zmin::Float64, zmax::Float64,
 	δx::Float64, δz::Float64,
-	npml::Int64,
 	)
 	x = [xx for xx in xmin:δx:xmax]
 	z = [zz for zz in zmin:δz:zmax]
 	nx, nz = size(x,1), size(z,1);
-	return M2D(x, z, nx, nz, npml, x[2]-x[1], z[2]-z[1])
+	return M2D(x, z, nx, nz,  x[2]-x[1], z[2]-z[1])
 end
 
 
@@ -106,26 +97,26 @@ Resample a 2-D grid.
 * a `M2D` resampled grid
 """
 M2D_resamp(grid::M2D, δx::Float64, δz::Float64) = M2D(grid.x[1], grid.x[end], 
-					grid.z[1], grid.z[end], δx, δz, grid.npml)
+					grid.z[1], grid.z[end], δx, δz)
 
 
 """
 Extend M2D by on its PML grid points on all sides.
 """
-function M2D_pml_pad_trun(mgrid::M2D; flag::Int64=1)
+function M2D_pml_pad_trun(mgrid::M2D; flag::Int64=1, npml=0)
 
 	if(isequal(flag,1)) 
-		xmin = mgrid.x[1] - mgrid.npml*mgrid.δx
-		xmax = mgrid.x[end] + mgrid.npml*mgrid.δx
-		zmin = mgrid.z[1] - mgrid.npml*mgrid.δz
-		zmax = mgrid.z[end] + mgrid.npml*mgrid.δz
-		return M2D(xmin,xmax,zmin,zmax, mgrid.nx+2*mgrid.npml,mgrid.nz+2*mgrid.npml,mgrid.npml)
+		xmin = mgrid.x[1] - npml*mgrid.δx
+		xmax = mgrid.x[end] + npml*mgrid.δx
+		zmin = mgrid.z[1] - npml*mgrid.δz
+		zmax = mgrid.z[end] + npml*mgrid.δz
+		return M2D(xmin,xmax,zmin,zmax, mgrid.nx+2*npml,mgrid.nz+2*npml)
 	elseif(isequal(flag,-1))
-		xmin = mgrid.x[1] + mgrid.npml*mgrid.δx
-		xmax = mgrid.x[end] - mgrid.npml*mgrid.δx
-		zmin = mgrid.z[1] + mgrid.npml*mgrid.δz
-		zmax = mgrid.z[end] - mgrid.npml*mgrid.δz
-		return M2D(xmin,xmax,zmin,zmax, mgrid.nx-2*mgrid.npml,mgrid.nz-2*mgrid.npml,mgrid.npml)
+		xmin = mgrid.x[1] + npml*mgrid.δx
+		xmax = mgrid.x[end] - npml*mgrid.δx
+		zmin = mgrid.z[1] + npml*mgrid.δz
+		zmax = mgrid.z[end] - npml*mgrid.δz
+		return M2D(xmin,xmax,zmin,zmax, mgrid.nx-2*npml,mgrid.nz-2*npml)
 	else
 		error("invalid flag")
 	end
