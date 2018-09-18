@@ -1,5 +1,5 @@
 using Grid
-using Base.Test
+using Test
 
 
 # generate 1D grid
